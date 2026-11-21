@@ -1,0 +1,4 @@
+bin/
+tools/pack/lz
+tools/pack/harness
+tools/pack/stub.exe

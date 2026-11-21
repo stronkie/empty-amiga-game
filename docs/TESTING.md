@@ -1,0 +1,28 @@
+# Testing
+
+## 1. 68000 interpreter (fast, automatic)
+`tools/m68k.c` is a small 68000 interpreter (Musashi-compatible API). `tools/amiga.c`
+is the harness Blocks uses: fake chip RAM / custom chips, runs the game for N frames,
+feeds joystick input and dumps the screen. `tools/emu68k.py` is the Python version
+(Slot Machine / Battleships). Build: `gcc -O2 -w -Itools -o build/amiga tools/amiga.c tools/m68k.c -lm`.
+`tools/pack/harness.c` shows the minimal version (run code until a PC is reached).
+
+## 2. Boot test in a real Amiga emulator (vAmigaWeb + AROS ROMs)
+Boots the ADF like a real A500 (with the free AROS Kickstart replacement) in headless
+Chrome and takes screenshots - this is how the packed releases were checked.
+```sh
+cd $AMIGA_TK/emu
+cp /path/Game_V1.0.adf vamigaweb/games/
+python3 serve.py vamigaweb &        # http://127.0.0.1:8000
+python3 test2.py Game_V1.0.adf shots/game 30,60,90 "35:Space;65:Digit1,Space"
+#   adf (relative to games/), output prefix, screenshot times (s), "time:key,key;..."
+```
+Needs python playwright + /usr/bin/google-chrome (both in the sandbox). AROS is not
+Kickstart 1.3: a game that runs there almost always runs on a real A500, but Mark
+still tests on his A500, ACA500 and WinUAE before a Final Release. Compare old vs
+new builds side by side (same timings) when you change loading or packing.
+
+## 3. Mark
+After a build, give Mark the ADF (Downloads + Dropbox) and ask him to test on his
+Amiga 500 / ACA500 / WinUAE. His CF card has an AGS2 "Game Selector" with all games
+(WHDLoad versions).

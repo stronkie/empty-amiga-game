@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stronkie Soft - play the demos in your browser (test)</title>
+<script src="emu/js/vAmigaWeb_player.js"></script>
+<style>
+  :root { --bg:#10162b; --panel:#1b2442; --ink:#e9ecf5; --dim:#a7b0cc; --accent:#ff8a1f; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header { padding:28px 20px 8px; text-align:center; }
+  header h1 { margin:0; font-size:1.7rem; letter-spacing:.02em; }
+  header h1 span { color:var(--accent); }
+  header p { margin:6px auto 0; max-width:720px; color:var(--dim); }
+  main { max-width:1180px; margin:0 auto; padding:16px 20px 40px; display:grid; gap:24px; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); }
+  .card { background:var(--panel); border-radius:12px; padding:16px; }
+  .card h2 { margin:0 0 4px; font-size:1.25rem; }
+  .card .sub { color:var(--dim); font-size:.92rem; margin-bottom:12px; }
+  .screen { position:relative; cursor:pointer; border-radius:8px; overflow:hidden; background:#000; }
+  .screen img { display:block; width:100%; image-rendering:pixelated; }
+  .screen .play { position:absolute; inset:auto 0 0 0; padding:12px; text-align:center; font-weight:700;
+                  background:linear-gradient(transparent, rgba(0,0,0,.85)); }
+  .screen .play b { background:var(--accent); color:#111; padding:8px 18px; border-radius:999px; }
+  ul.keys { margin:12px 0 0; padding-left:18px; color:var(--dim); font-size:.92rem; }
+  ul.keys b { color:var(--ink); }
+  footer { max-width:1180px; margin:0 auto; padding:0 20px 32px; color:var(--dim); font-size:.85rem; }
+  #player_container { background:#000; }
+  #vAmigaWeb { border:none; }
+  .player_icon_btn { background:transparent; color:#fff; margin-right:15px; cursor:pointer; }
+</style>
+</head>
+<body>
+<header>
+  <h1><span>Stronkie Soft</span> &ndash; play the demos in your browser</h1>
+  <p>Test page: the free demos of Stronkie's Snake and Stronkie's Pipedream, running in the vAmigaWeb Amiga emulator with the free AROS Kickstart replacement. Click a picture to start.</p>
+</header>
+<main>
+  <section class="card">
+    <h2>Stronkie's Snake &ndash; free demo V1.1</h2>
+    <div class="sub">Amiga 500 &middot; levels 1&ndash;3</div>
+    <div class="screen" onclick="startGame(this,'Snake_Demo_V1.1.adf')">
+      <img src="img/snake_title.png" alt="Stronkie's Snake demo title screen">
+      <div class="play"><b>&#9654; Play in browser</b></div>
+    </div>
+    <ul class="keys">
+      <li><b>Cursor keys</b> steer, <b>Space</b> or <b>Return</b> = fire / start</li>
+      <li><b>P</b> pauses, <b>Esc</b> in the pause goes back to the title</li>
+    </ul>
+  </section>
+  <section class="card">
+    <h2>Stronkie's Pipedream &ndash; free demo V1.0</h2>
+    <div class="sub">Amiga 500 &middot; world 1, levels 1&ndash;10</div>
+    <div class="screen" onclick="startGame(this,'StronkiesPipedream_V1.0_DEMO.adf')">
+      <img src="img/pipe_title.png" alt="Stronkie's Pipedream demo title menu">
+      <div class="play"><b>&#9654; Play in browser</b></div>
+    </div>
+    <ul class="keys">
+      <li><b>Mouse</b>: left button turns a pipe right, right button turns it left</li>
+      <li>Or <b>cursor keys</b> to move the frame and <b>Space</b> to turn; <b>U</b> undo, <b>H</b> hint</li>
+    </ul>
+  </section>
+</main>
+<footer>
+  Created By Mark Stronks, Stronkie Soft &copy; 2026. Emulator: <a style="color:var(--dim)" href="https://vamigaweb.github.io/">vAmigaWeb</a> (GPL), Kickstart replacement: AROS ROM (AROS Public License). Click inside the game screen first so it gets your keyboard. Sound starts after your first click.
+</footer>
+<script>
+  vAmigaWeb_player.vAmigaWeb_url = 'emu/';
+  function startGame(el, adf) {
+    const config = {
+      url: new URL('games/' + adf, location.href).href,
+      AROS: true,
+      dialog_on_missing_roms: false,
+      dialog_on_disk: false,
+      navbar: false,
+      wide: true,
+      border: 0.3,
+      port2: true,
+      mouse: true
+    };
+    vAmigaWeb_player.load(el, encodeURIComponent(JSON.stringify(config)));
+    return false;
+  }
+</script>
+</body>
+</html>
