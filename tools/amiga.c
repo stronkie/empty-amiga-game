@@ -1,3 +1,4 @@
+#include <sys/stat.h>
 /*
  * amiga.c - a small Amiga 500 test harness (Ghost Zappers: Tycoon, Stronkie's Baseball)
  *
@@ -93,7 +94,7 @@ static void err(const char *fmt, uint32_t a, uint32_t b) {
 		if (warnlimit > 55) {   /* first errors: a rough call stack */
 			uint32_t sp = m68k_get_reg(NULL, M68K_REG_A7);
 			fprintf(stderr, "     stack:");
-			for (int i = 0; i < 48; i++) { uint32_t v = rd32(sp + i * 4); if (v >= 0xc08000 && v < 0xc10000) { uint32_t o; const char *nm = symname(v, &o); fprintf(stderr, " %s+%u", nm, o); } }
+			for (int i = 0; i < 48; i++) { uint32_t v = rd32(sp + i * 4); if (v >= 0xc00000 && v < 0xc80000) { uint32_t o; const char *nm = symname(v, &o); fprintf(stderr, " %s+%u", nm, o); } }
 			fprintf(stderr, "\n     d0=%08x d1=%08x a0=%08x a1=%08x a2=%08x\n", m68k_get_reg(NULL,M68K_REG_D0), m68k_get_reg(NULL,M68K_REG_D1), m68k_get_reg(NULL,M68K_REG_A0), m68k_get_reg(NULL,M68K_REG_A1), m68k_get_reg(NULL,M68K_REG_A2));
 		}
 	}
@@ -147,6 +148,8 @@ static void readstr(uint32_t a, char *buf, int n) {
 static int done = 0;
 static int whd = 0; static uint32_t resbase = 0;
 static int dos_writes = 0;
+static long blits = 0;
+static char conq[16][128]; static int conq_n = 0, conq_h = 0;
 static long long delayframes = 0;
 
 static void hostpath(const char *amiganame, char *out) {
@@ -184,12 +187,23 @@ static int os_call(uint32_t pc) {
 		}
 	} else if (pc >= GFXBASE - 1024 && pc < GFXBASE) {
 		lvo = GFXBASE - pc;
-		if (lvo != 222 && lvo != 270 && lvo != 228) err("gfx LVO -%d not emulated%s", lvo, 0);
+		if (lvo != 222 && lvo != 270 && lvo != 228 && lvo != 456 && lvo != 462) err("gfx LVO -%d not emulated%s", lvo, 0);
 	} else if (pc >= INTBASE - 512 && pc < INTBASE) {
 		lvo = INTBASE - pc;
 	} else if (pc >= DOSBASE - 1024 && pc < DOSBASE) {
 		lvo = DOSBASE - pc;
-		if (lvo == 30) {
+		if (lvo == 30 && ({ char cn[8]; readstr(d1, cn, 8); !strncasecmp(cn, "CON:", 4); })) {
+			res = 0x200; fprintf(stderr, "   dos Open CON\n");
+		} else if ((lvo == 48 || lvo == 42) && d1 == 0x200) {
+			if (lvo == 48) { for (uint32_t k = 0; k < d3; k++) { uint8_t *p = memptr(d2 + k); if (p) fputc(*p, stdout); } fflush(stdout); res = d3; }
+			else { const char *l = conq_n > conq_h ? conq[conq_h++] : ""; uint32_t n = 0; while (l[n] && n + 1 < d3) { *memptr(d2 + n) = l[n]; n++; } *memptr(d2 + n) = 10; res = n + 1; printf("%s\n", l); }
+		} else if (lvo == 36 && d1 == 0x200) { res = 0;
+		} else if (lvo == 84) { char nm[128], hp[512]; struct stat st; readstr(d1, nm, 128); hostpath(nm, hp);
+			res = stat(hp, &st) == 0 ? 0x300 : 0; fprintf(stderr, "   dos Lock %s -> %s\n", nm, res ? "ok" : "fail");
+		} else if (lvo == 90) { res = 0;
+		} else if (lvo == 120) { char nm[128], hp[512]; readstr(d1, nm, 128); hostpath(nm, hp);
+			res = mkdir(hp, 0755) == 0 ? 0x300 : 0; fprintf(stderr, "   dos CreateDir %s -> %s\n", nm, res ? "ok" : "fail");
+		} else if (lvo == 30) {
 			char nm[128], hp[512]; readstr(d1, nm, 128); hostpath(nm, hp);
 			FILE *f = fopen(hp, d2 == 1006 ? "wb" : (d2 == 1004 ? "r+b" : "rb"));
 			res = 0;
@@ -326,7 +340,20 @@ static void custom_write(uint32_t off, uint16_t v) {
 	case 0x09e: if (v & 0x8000) adkcon |= v & 0x7fff; else adkcon &= ~v; break;
 	case 0x080: cop1lc = (cop1lc & 0xffff) | (v << 16); break;
 	case 0x082: cop1lc = (cop1lc & 0xffff0000) | v; chipptr_check(0x80, cop1lc); break;
-	case 0x058: err("blitter used (BLTSIZE=%04x) - not emulated%s", v, 0); break;
+	case 0x058: {   /* blitter: D-only fill (minterm 00 / ff) and A->D copy (09f0) */
+		int h = v >> 6, w = v & 63; if (!h) h = 1024; if (!w) w = 64;
+		uint16_t c0 = cregs[0x40 >> 1], c1 = cregs[0x42 >> 1];
+		uint32_t dp = ((cregs[0x54 >> 1] << 16) | cregs[0x56 >> 1]) & 0xfffffe, ap = ((cregs[0x50 >> 1] << 16) | cregs[0x52 >> 1]) & 0xfffffe;
+		int dmod = (int16_t)cregs[0x66 >> 1], amod = (int16_t)cregs[0x64 >> 1];
+		if (c1 != 0) { err("blitter BLTCON1 %04x not emulated%s", c1, 0); break; }
+		if ((c0 & 0x0f00) == 0x0100 && ((c0 & 0xff) == 0 || (c0 & 0xff) == 0xff)) {
+			uint16_t fv = (c0 & 0xff) ? 0xffff : 0;
+			for (int y = 0; y < h; y++) { for (int x = 0; x < w; x++) { if (dp >= CHIPSIZE) { err("blit outside chip %06x%s", dp, 0); return; } wr16(dp, fv); dp += 2; } dp += dmod; }
+		} else if (c0 == 0x09f0) {
+			for (int y = 0; y < h; y++) { for (int x = 0; x < w; x++) { if (dp >= CHIPSIZE || ap >= CHIPSIZE) { err("blit outside chip %06x%s", dp, 0); return; } wr16(dp, rd16(ap)); dp += 2; ap += 2; } dp += dmod; ap += amod; }
+		} else err("blitter mode BLTCON0=%04x not emulated%s", c0, 0);
+		blits++;
+		break; }
 	}
 	/* audio location low words */
 	if (off == 0x0a2 || off == 0x0b2 || off == 0x0c2 || off == 0x0d2) {
@@ -385,14 +412,15 @@ unsigned int m68k_read_memory_32(unsigned int a) {
 }
 unsigned int m68k_read_disassembler_16(unsigned int a) { return rd16(a); }
 unsigned int m68k_read_disassembler_32(unsigned int a) { return rd32(a); }
+static uint32_t watch_ad[8]; static char watch_nm[8][32]; static int nwatch;
 void m68k_write_memory_8(unsigned int a, unsigned int v) {
+	if (nwatch) { extern void watch_byte(unsigned int, unsigned int); watch_byte(a & 0xffffff, v); }
 	a &= 0xffffff;
 	uint8_t *p = memptr(a); if (p) { check_vec_write(a); *p = v; return; }
 	if ((a & 0xfff000) == 0xbfe000 || (a & 0xfff000) == 0xbfd000) { cia_write(a, v); return; }
 	if ((a & 0xfff000) == 0xdff000) { err("byte write to custom %06x%s", a, 0); return; }
 	err("byte write outside RAM %06x%s", a, 0);
 }
-static uint32_t watch_ad[8]; static char watch_nm[8][32]; static int nwatch;
 static void watch_hit(unsigned int a, unsigned int v);
 void m68k_write_memory_16(unsigned int a, unsigned int v) {
 	a &= 0xffffff;
@@ -405,6 +433,7 @@ void m68k_write_memory_16(unsigned int a, unsigned int v) {
 void m68k_write_memory_32(unsigned int a, unsigned int v);
 void m68k_write_memory_32(unsigned int a, unsigned int v) {
 	a &= 0xffffff;
+	if (nwatch) { watch_hit(a, v >> 16); watch_hit(a + 2, v & 0xffff); }
 	if (a & 1) err("long write at odd address %06x (address error)%s", a, 0);
 	if ((a & 0xfff000) == 0xdff000) { custom_write(a & 0x1fe, v >> 16); custom_write((a + 2) & 0x1fe, v & 0xffff); return; }
 	uint8_t *p = memptr(a); if (p) { check_vec_write(a); p[0]=v>>24; p[1]=v>>16; p[2]=v>>8; p[3]=v; return; }
@@ -638,6 +667,17 @@ static void watch_hit(unsigned int a, unsigned int v) {
 		printf("W f=%lld %s %d->%d at %s+%u\n", frames, watch_nm[i], old, (int16_t)v, n, off);
 	}
 }
+void watch_byte(unsigned int a, unsigned int v) {
+	for (int i = 0; i < nwatch; i++) if ((a & ~1u) == watch_ad[i]) {
+		uint8_t *p = memptr(a); if (p && *p == (uint8_t)v) return;
+		uint32_t off; uint32_t pc = m68k_get_reg(NULL, M68K_REG_PPC); const char *n = symname(pc, &off);
+		printf("B f=%lld %s byte %06x <- %02x at %s+%u  d0-d7 %x %x %x %x %x %x %x %x a0 %x a1 %x sp %x\n", frames, watch_nm[i], a, v & 0xff, n, off,
+			m68k_get_reg(NULL,M68K_REG_D0),m68k_get_reg(NULL,M68K_REG_D1),m68k_get_reg(NULL,M68K_REG_D2),m68k_get_reg(NULL,M68K_REG_D3),
+			m68k_get_reg(NULL,M68K_REG_D4),m68k_get_reg(NULL,M68K_REG_D5),m68k_get_reg(NULL,M68K_REG_D6),m68k_get_reg(NULL,M68K_REG_D7),
+			m68k_get_reg(NULL,M68K_REG_A0),m68k_get_reg(NULL,M68K_REG_A1),m68k_get_reg(NULL,M68K_REG_A7));
+		{ uint32_t sp = m68k_get_reg(NULL,M68K_REG_A7); for (int k = 0; k < 40; k++) { uint32_t w = rd32(sp + k * 2); uint32_t o2; if (w >= 0xc00000 && w < 0xc80000) { printf("   stack+%d -> %s+%u\n", k*2, symname(w,&o2), o2); } } }
+	}
+}
 static void runframes(int n) { for (int i = 0; i < n && !done; i++) run_frame(); }
 
 static int keycode(const char *s) {
@@ -714,6 +754,11 @@ script:;
 			long long start = frames; int quiet = 0;
 			while (!done && frames - start < 3000) { long long pf = poll_frame; run_frame(); if (poll_frame > pf && poll_frame == frames - 1) quiet++; else quiet = 0; if (quiet >= 3) break; }
 			fprintf(stderr, "   tap %s,%s settled after %lld frames\n", a, b, frames - start); }
+		else if (!strcmp(cmd, "mdelta")) { int dx = atoi(a), dy = atoi(b); for (int k = 0; k < 8; k++) { mousex += dx / 8; mousey += dy / 8; run_frame(); } }
+		else if (!strcmp(cmd, "lhold")) { lmb = 1; runframes(atoi(a)); lmb = 0; runframes(2); }
+		else if (!strcmp(cmd, "conline")) { if (conq_n < 16) { snprintf(conq[conq_n++], 128, "%s", a); } }
+		else if (!strcmp(cmd, "down")) { int k = keycode(a); if (keyqh == keyqn) keyqh = keyqn = 0; keyq[keyqn++] = k; runframes(4); }
+		else if (!strcmp(cmd, "up")) { int k = keycode(a); if (keyqh == keyqn) keyqh = keyqn = 0; keyq[keyqn++] = k | 0x80; runframes(4); }
 		else if (!strcmp(cmd, "rclick")) { rmb = 1; runframes(3); rmb = 0; runframes(4); }
 		else if (!strcmp(cmd, "key")) { int k = keycode(a); if (k < 0) { fprintf(stderr, "bad key %s\n", a); } else { pushkey(k); runframes(10);
 			long long start = frames; int quiet = 0;

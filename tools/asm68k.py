@@ -811,6 +811,15 @@ class Assembler:
                         out += L(len(offs)) + L(t)
                         for o in sorted(offs): out += L(o)
                     out += L(0)
+            if getattr(self, 'want_syms', False):
+                syms = [(n, v.v) for n, v in self.syms.items() if isinstance(v, Val) and v.sec is s and '.' not in n]
+                if syms:
+                    out += L(0x3f0)
+                    for n, v in syms:
+                        b = n.encode()[:120]; b += bytes((4 - len(b) % 4) % 4 or 0)
+                        if len(b) % 4 == 0 and len(b) == len(n.encode()[:120]): b += bytes(4)
+                        out += L(len(b) // 4) + b + L(v)
+                    out += L(0)
             out += L(0x3f2)
         return bytes(out)
 
@@ -832,11 +841,12 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('src'); ap.add_argument('-o', required=True)
     ap.add_argument('-raw', action='store_true', help='write a flat binary of the first section')
-    ap.add_argument('-map'); ap.add_argument('-I', action='append', default=[])
+    ap.add_argument('-map'); ap.add_argument('-sym', action='store_true'); ap.add_argument('-I', action='append', default=[])
     a = ap.parse_args()
     asm = Assembler(a.I)
     try:
         asm.run(a.src)
+        asm.want_syms = a.sym
         data = asm.raw() if a.raw else asm.hunkfile()
     except AsmError as e:
         print('error: %s' % e, file=sys.stderr); sys.exit(1)

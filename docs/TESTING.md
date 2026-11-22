@@ -7,6 +7,17 @@ feeds joystick input and dumps the screen. `tools/emu68k.py` is the Python versi
 (Slot Machine / Battleships). Build: `gcc -O2 -w -Itools -o build/amiga tools/amiga.c tools/m68k.c -lm`.
 `tools/pack/harness.c` shows the minimal version (run code until a PC is reached).
 
+### Test harness extras (from Stronkie's Space Trader, 2026-11-22)
+`tools/amiga.c` also does:
+- Blitter: D-only fills (minterm 00/FF) and A->D copies (BLTCON0 09F0). Other modes still stop with an error.
+- dos.library: `CON:` windows (Open/Read/Write, typed input from `conline`), Lock, UnLock, CreateDir (for hard disk installers). graphics.library LVO -456/-462 are allowed.
+- Script commands: `mdelta dx dy` (move the mouse, port 1), `lhold n` (hold the left mouse button n frames), `down KEY` / `up KEY` (hold and release a key), `conline TEXT` (a line typed into a CON: window).
+- `watch SYMBOL+off` now also reports byte and long writes, with d0-d7, a0, a1, sp and the return addresses on the stack - the quickest way to find who overwrites a variable.
+
+`tools/asm68k.py -sym` writes a symbol hunk, so the harness can show routine names in its reports (build a `test.game` with it next to the release build).
+
+`tools/fixbr.py` fixes "short branch out of range" errors by turning `bxx.s` into `bxx` until the source assembles.
+
 ## 2. Boot test in a real Amiga emulator (vAmigaWeb + AROS ROMs)
 Boots the ADF like a real A500 (with the free AROS Kickstart replacement) in headless
 Chrome and takes screenshots - this is how the packed releases were checked.
