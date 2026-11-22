@@ -28,5 +28,5 @@ art/  screenshots/  print/  previous versions/  itch/
 - `make_release.py` is an example that packs the game files on existing ADFs and bumps the version strings.
 
 ## Delivering a build
-- ADF(s) + WHDLoad + hard drive zip to Mark's Downloads folder and to `C:\Users\mstro\Dropbox\Amiga\<Game name>` (device_commit_files from `/mnt/user-data/outputs/`).
+- ADF(s) + WHDLoad + hard drive zip to `C:\Users\mstro\Downloads\Stronkie Soft\Amiga Games\<game folder>` (move the builds they replace into its old-versions folder) and to `C:\Users\mstro\Dropbox\Amiga\<Game name>` (device_commit_files from `/mnt/user-data/outputs/`). See RELEASE.md for all of Mark's folders.
 - Push to the game's repo (README changelog under "Not yet on itch" unless Mark asked to publish now).

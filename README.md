@@ -11,6 +11,8 @@ git clone --depth 1 https://github.com/stronkie/empty-amiga-game /home/claude/am
 . /home/claude/amiga-toolkit/setup.sh        # builds vasm + the packer (about a minute)
 ```
 
+No GitHub? The same toolkit is in `C:\Users\mstro\Downloads\Stronkie Soft\Tools for Claude\amiga-toolkit.zip` (and in Dropbox\Amiga\amiga-toolkit).
+
 Then read, in this order:
 
 1. `docs/CONVENTIONS.md` - Mark's rules for every game (target machine, names, logo, demo, dev mode, versions...)

@@ -3,7 +3,14 @@
 ## Where things go
 - **GitHub**: one private repo per game (`stronkie/<repo>`, list in Claude's memory `/topics/github-repos.md`). New repo for a new game - Mark creates it (Claude cannot create repos), then `add_repo` with access "push".
 - **Dropbox**: `C:\Users\mstro\Dropbox\Amiga\<Game name>` (folder named like the game; old builds in `Old`).
-- **Downloads**: every file made for Mark also goes to `C:\Users\mstro\Downloads`.
+- **Mark's files: `C:\Users\mstro\Downloads\Stronkie Soft`** (since 2026-11-22). Find files there and put every new file in the right folder:
+  - `Amiga Games\<game folder>`: the latest ADF / WHDLoad / hard drive zip at the top; the builds they replace into that game's old-versions folder (it is called `Old`, `Older versions`, `old versions`... - use the one that is there); manual and print kit into its `docs` folder; screenshots into its `screenshots` folder. A new game gets a new folder with `docs`, `older versions` and `screenshots`.
+  - `C64\<game>`: C64 builds.
+  - `itch stuff`: itch upload sets and covers.
+  - `Tools for Claude`: this toolkit (`amiga-toolkit` + `amiga-toolkit.zip`), WHDLoad dev files, AGS2.
+  - `Graphics`: Stronkie Soft logos, banners, loading and title art.
+  - `Amiga CF Card`: CF card images. `Browser test`: browser demos. `ready to port`: source material for ports.
+  - Anything that fits none of them goes loose into `C:\Users\mstro\Downloads`.
 - **itch.io**: https://stronkie.itch.io/ - one page per game.
 
 ## When
