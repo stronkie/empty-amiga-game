@@ -10,8 +10,8 @@ EXE=SGame                   # the program on the disk (+ loader if any)
 VOL="Stronkies Game"        # disk name
 VER=${VER:-0.1}
 mkdir -p build
-# 1. assemble (Kickstart 1.3 hunks, no symbols in the release build)
-vasmm68k_mot -quiet -Fhunkexe -kick1hunks -nosym -o build/$EXE src/main.s
+# 1. assemble (68000 only, Kickstart 3.1 target, no symbols in the release build)
+vasmm68k_mot -quiet -m68000 -Fhunkexe -kick1hunks -nosym -o build/$EXE src/main.s
 # 2. icon
 python3 $TK/tools/make_icon.py build/$EXE.info
 # 3. the floppy: packed program (loads ~2x faster), startup-sequence, ReadMe

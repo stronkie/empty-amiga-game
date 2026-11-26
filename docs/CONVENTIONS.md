@@ -1,9 +1,9 @@
 # Mark's rules for every Stronkie Soft Amiga game
 
 ## The machine
-- Target: a stock **Amiga 500, Kickstart / Workbench 1.3, 512 KB chip + 512 KB trapdoor** (1 MB total), joystick in port 2. Must also run on an A500 with an ACA500(plus) and in WinUAE - Mark tests on all three.
+- Target: **Amiga 500, 68000 CPU (7 MHz), Kickstart 3.1, Workbench 3.1, 1 MB chip RAM** (8372A Fat Agnus: 512 KB mainboard + 512 KB trapdoor, both chip; no fast/slow RAM), joystick in port 2. Must also run on an A500 with an ACA500(plus) and in WinUAE - Mark tests on all three.
 - An **Enhanced** edition (more chip RAM, faster CPU, ACA500 at 42 MHz, ...) goes on the SAME itch page as the normal game, never on its own page. It must say clearly what it needs and refuse to run (with a message) on a machine that is too small or slow.
-- Write 68000 assembly (vasm, Motorola syntax, `-Fhunkexe -kick1hunks`). Take over the system cleanly and give it back on exit (quit to Workbench works).
+- Write 68000 assembly only (vasm, Motorola syntax, `-m68000 -Fhunkexe -kick1hunks`): no 68020+ instructions (no `muls.l/divu.l`, `extb.l`, bitfields, scaled index `(a0,d0.w*4)`, FPU), word/long access on even addresses. A game that needs a 68020 must be reworked to the 68000. Take over the system cleanly and give it back on exit (quit to Workbench works).
 
 ## Names and credits
 - Credit line everywhere: **"Created By Mark Stronks, Stronkie Soft"** (© year).

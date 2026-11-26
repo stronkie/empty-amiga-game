@@ -29,7 +29,7 @@ python3 test2.py Game_V1.0.adf shots/game 30,60,90 "35:Space;65:Digit1,Space"
 #   adf (relative to games/), output prefix, screenshot times (s), "time:key,key;..."
 ```
 Needs python playwright + /usr/bin/google-chrome (both in the sandbox). AROS is not
-Kickstart 1.3: a game that runs there almost always runs on a real A500, but Mark
+Kickstart 3.1: a game that runs there almost always runs on a real A500, but Mark
 still tests on his A500, ACA500 and WinUAE before a Final Release. Compare old vs
 new builds side by side (same timings) when you change loading or packing.
 
