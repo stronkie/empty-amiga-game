@@ -126,6 +126,8 @@ static const char *symname(uint32_t a, uint32_t *off) {
 #define SERVRET 0x7FE10   /* a vertical blank server returns here */
 static uint32_t vb_code = 0, vb_data = 0; static int vb_in = 0; static uint32_t vb_regs[18];
 #define GFXCOPINIT 0x7FE10
+#define CIAARES  0x7FD80   /* ciaa.resource: AbleICR -18, SetICR -24 (Kickstart-friendly keyboard reading) */
+static uint8_t ciares_acc = 0, ciares_mask = 0x0f;
 
 static int osused = 0;
 static FILE *fh[16];
@@ -179,12 +181,20 @@ static int os_call(uint32_t pc) {
 		case 198: { uint32_t n = (m68k_get_reg(NULL, M68K_REG_D0) + 7) & ~7; uint32_t req = m68k_get_reg(NULL, M68K_REG_D1);
 			extern uint32_t harness_alloc(uint32_t, int); res = harness_alloc(n, req & 2); break; }
 		case 210: res = 0; break;                            /* FreeMem */
+		case 498: { char nm[64]; readstr(a1, nm, 64); res = !strcmp(nm, "ciaa.resource") ? CIAARES : 0; break; } /* OpenResource */
 		case 444: res = 0; break;                            /* OpenDevice ok */
 		case 168: if (m68k_get_reg(NULL, M68K_REG_D0) == 5) { vb_code = rd32(a1 + 18); vb_data = rd32(a1 + 14); } res = 0; break;  /* AddIntServer (VERTB) */
 		case 174: vb_code = 0; res = 0; break;               /* RemIntServer */
 		case 456: res = 0; break;                            /* DoIO */
 		default: err("exec LVO -%d not emulated%s", lvo, 0); break;
 		}
+	} else if (pc >= CIAARES - 64 && pc < CIAARES) {
+		uint8_t m = m68k_get_reg(NULL, M68K_REG_D0) & 0xff;
+		lvo = CIAARES - pc;
+		ciares_acc |= cia_icr; cia_icr = 0;                  /* the resource reads the hardware ICR */
+		if (lvo == 18) { res = ciares_mask; if (m & 0x80) ciares_mask |= m & 0x7f; else ciares_mask &= ~m; }   /* AbleICR */
+		else if (lvo == 24) { res = ciares_acc; if (m & 0x80) ciares_acc |= m & 0x7f; else ciares_acc &= ~m; } /* SetICR */
+		else err("ciaa.resource LVO -%d not emulated%s", lvo, 0);
 	} else if (pc >= GFXBASE - 1024 && pc < GFXBASE) {
 		lvo = GFXBASE - pc;
 		if (lvo != 222 && lvo != 270 && lvo != 228 && lvo != 456 && lvo != 462) err("gfx LVO -%d not emulated%s", lvo, 0);
@@ -511,6 +521,7 @@ static void setup_os(void) {
 	for (uint32_t a = GFXBASE - 1024; a < GFXBASE; a += 2) wr16(a, 0x4e75);
 	for (uint32_t a = DOSBASE - 1024; a < DOSBASE; a += 2) wr16(a, 0x4e75);
 	for (uint32_t a = INTBASE - 512; a < INTBASE; a += 2) wr16(a, 0x4e75);
+	for (uint32_t a = CIAARES - 64; a < CIAARES; a += 2) wr16(a, 0x4e75);
 	wr16(EXITADDR, 0x4e75);
 	wr16(SERVRET, 0x4e71);
 	wr16(DOSBASE + 20, 34);       /* lib_Version 34 = 1.3 */
@@ -642,7 +653,7 @@ static void run_frame(void) {
 	aud_frame();
 	/* input per frame */
 	if (keywait > 0) keywait--;
-	if (keyqh < keyqn && keywait == 0 && !(cia_icr & 8)) {
+	if (keyqh < keyqn && keywait == 0 && !((cia_icr | ciares_acc) & 8)) {
 		int k = keyq[keyqh++];
 		uint8_t x = (uint8_t)k; uint8_t rolx = (x << 1) | (x >> 7);
 		cia_sdr = ~rolx; cia_icr |= 8; keywait = 3;
