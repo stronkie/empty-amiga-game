@@ -267,6 +267,30 @@ static void resload_call(uint32_t off) {
 		fseek(f, d1, SEEK_SET);
 		for (uint32_t k = 0; k < d0; k++) { int c = fgetc(f); if (c == EOF) break; uint8_t *p = memptr(a1 + k); if (!p) { err("resload load outside RAM %06x%s", a1 + k, 0); break; } *p = c; res++; }
 		fclose(f); break;
+	case 8: readstr(a0, nm, 128); hostpath(nm, hp);       /* LoadFile a1 dest -> d0 size */
+		f = fopen(hp, "rb"); if (!f) { err("resload_LoadFile: no %s%s", nm, 0); break; }
+		{ int c; while ((c = fgetc(f)) != EOF) { uint8_t *p = memptr(a1 + res); if (!p) { err("resload load outside RAM %06x%s", a1 + res, 0); break; } *p = c; res++; } }
+		fclose(f); fprintf(stderr, "   resload_LoadFile %s -> %u bytes at %06x\n", nm, res, a1); break;
+	case 80: {                                            /* Relocate a0 = hunk file in memory: hunks placed one after another (8-aligned) */
+		uint32_t len = 0x80000; static uint8_t cp[0x80000]; for (uint32_t k = 0; k < len && memptr(a0 + k); k++) cp[k] = *memptr(a0 + k);
+		#define RL(o) ((cp[o] << 24) | (cp[(o) + 1] << 16) | (cp[(o) + 2] << 8) | cp[(o) + 3])
+		if (RL(0) != 0x3f3) { err("resload_Relocate: not a hunk file at %06x%s", a0, 0); break; }
+		uint32_t o = 4; while (RL(o)) o += 4 + RL(o) * 4; o += 4;   /* resident names */
+		uint32_t first = RL(o + 4), last = RL(o + 8); o += 12;
+		uint32_t nh = last - first + 1, base[64], size[64], at = a0; if (nh > 64) { err("too many hunks %d%s", nh, 0); break; }
+		for (uint32_t h = 0; h < nh; h++) { size[h] = (RL(o) & 0x3fffffff) * 4; o += 4; base[h] = at; at += (size[h] + 7) & ~7; }
+		for (uint32_t k = a0; k < at; k++) { uint8_t *p = memptr(k); if (p) *p = 0; }
+		int h = -1;
+		while (o + 4 <= len) {
+			uint32_t t = RL(o) & 0x3fffffff; o += 4;
+			if (t == 0x3e9 || t == 0x3ea) { uint32_t w = RL(o); o += 4; h++; for (uint32_t k = 0; k < w * 4; k++) *memptr(base[h] + k) = cp[o + k]; o += w * 4; }
+			else if (t == 0x3eb) { o += 4; h++; }
+			else if (t == 0x3ec) { for (;;) { uint32_t c = RL(o); o += 4; if (!c) break; uint32_t th = RL(o); o += 4; for (uint32_t k = 0; k < c; k++) { uint32_t off = RL(o); o += 4; wr32(base[h] + off, rd32(base[h] + off) + base[th]); } } }
+			else if (t == 0x3f0) { for (;;) { uint32_t c = RL(o); o += 4; if (!c) break; o += c * 4 + 4; } }
+			else if (t == 0x3f2) { if (h + 1 >= (int)nh) break; }
+			else { err("resload_Relocate: hunk type %x%s", t, 0); break; }
+		}
+		res = at - a0; fprintf(stderr, "   resload_Relocate %d hunks at %06x, %u bytes\n", nh, a0, res); break; }
 	default: err("resload offset %d not emulated%s", off, 0);
 	}
 	m68k_set_reg(M68K_REG_D0, res);
@@ -694,7 +718,7 @@ static void runframes(int n) { for (int i = 0; i < n && !done; i++) run_frame();
 static int keycode(const char *s) {
 	struct { const char *n; int c; } t[] = {
 		{"ESC",0x45},{"SPACE",0x40},{"RETURN",0x44},{"BACK",0x41},{"DEL",0x46},{"UP",0x4c},{"DOWN",0x4d},{"RIGHT",0x4e},{"LEFT",0x4f},
-		{"F1",0x50},{"F2",0x51},{"F3",0x52},{"F4",0x53},{"F5",0x54},{"F6",0x55},{"F7",0x56},{"F8",0x57},{"F9",0x58},{"F10",0x59},{"HELP",0x5f},{"TAB",0x42},{0,0}};
+		{"F1",0x50},{"F2",0x51},{"F3",0x52},{"F4",0x53},{"F5",0x54},{"F6",0x55},{"F7",0x56},{"F8",0x57},{"F9",0x58},{"F10",0x59},{"HELP",0x5f},{"TAB",0x42},{"CTRL",0x63},{"LSHIFT",0x60},{"RSHIFT",0x61},{"LALT",0x64},{"RALT",0x65},{"LAMIGA",0x66},{"RAMIGA",0x67},{0,0}};
 	for (int i = 0; t[i].n; i++) if (!strcasecmp(s, t[i].n)) return t[i].c;
 	const char *row1 = "1234567890", *rq = "QWERTYUIOP", *ra = "ASDFGHJKL", *rz = "ZXCVBNM";
 	char c = s[0]; if (c >= 'a' && c <= 'z') c -= 32;

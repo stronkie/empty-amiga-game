@@ -18,6 +18,10 @@ feeds joystick input and dumps the screen. `tools/emu68k.py` is the Python versi
 
 `tools/fixbr.py` fixes "short branch out of range" errors by turning `bxx.s` into `bxx` until the source assembles.
 
+### Test harness extras (from Stronkie's Clover Snake, 2026-11-27)
+- WHDLoad slaves: `resload_LoadFile` and `resload_Relocate` are emulated, so a slave built from `slave_simple_resload.s` runs in the harness: `amiga Game.slave <data dir> script`. Build slaves with `-Fhunkexe -nosym` (not `-Fbin`).
+- Key names `CTRL`, `LSHIFT`, `RSHIFT`, `LALT`, `RALT`, `LAMIGA`, `RAMIGA` for `down` / `up` (test dev-mode key combos).
+
 ## 2. Boot test in a real Amiga emulator (vAmigaWeb + AROS ROMs)
 Boots the ADF like a real A500 (with the free AROS Kickstart replacement) in headless
 Chrome and takes screenshots - this is how the packed releases were checked.
