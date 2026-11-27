@@ -125,7 +125,13 @@ class FFS:
             s.setfree(ext,True); cur=s.blk(ext)
         s._unlink(dirblk,h,name); s.setfree(h,True)
         return True
+    @staticmethod
+    def checkname(name):
+        # AmigaDOS file/drawer names are at most 30 characters (longer names break
+        # DOS and AGS2: "error copying" and back to Workbench)
+        assert 0<len(name)<=30 and '/' not in name and ':' not in name, 'bad AmigaDOS name (max 30 chars): '+name
     def mkdir(s,dirblk,name):
+        s.checkname(name)
         h=s.lookup(dirblk,name)
         if h: return h
         h,=s.alloc(1)
@@ -133,6 +139,7 @@ class FFS:
         nb=name.encode('latin-1'); b[432]=len(nb); b[433:433+len(nb)]=nb; s.date(b); s.csum(b); s.wblk(h,b)
         s._link(dirblk,h,name); return h
     def create(s,dirblk,name,data,comment=b''):
+        s.checkname(name)
         s.delete(dirblk,name)
         nd=(len(data)+511)//512; next_=(max(0,nd-72)+71)//72
         blocks=s.alloc(1+nd+next_)
