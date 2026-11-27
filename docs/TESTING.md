@@ -37,6 +37,17 @@ Kickstart 3.1: a game that runs there almost always runs on a real A500, but Mar
 still tests on his A500, ACA500 and WinUAE before a Final Release. Compare old vs
 new builds side by side (same timings) when you change loading or packing.
 
+### Playing a mouse game in vAmigaWeb (from World of Stronkie remake, 2026-11-27)
+`emu/webplay.py disk.adf outdir steps.txt` drives vAmigaWeb with the **mouse**: `g X Y` puts the
+pointer on game pixel X,Y, `l` / `r` click, `k KEY` presses a key, `w S` waits, `s NAME` takes a
+screenshot. The pointer is homed with small moves first: the Amiga's mouse counters are 8 bit,
+so one move of 128 or more wraps around (that is why a single -200 move sends the pointer the
+wrong way). Emulation in headless Chrome runs a bit slower than real time: wait generously.
+
+`tools/adf.py`: the built-in boot block (used when no boot block file is given) pointed 6 bytes
+past "dos.library" and did not boot (AROS showed "waiting for bootable media"); fixed 2026-11-27.
+Pass `tools/bootblock.bin` to be sure.
+
 ## 3. Mark
 After a build, give Mark the ADF (Downloads + Dropbox) and ask him to test on his
 Amiga 500 / ACA500 / WinUAE. His CF card has an AGS2 "Game Selector" with all games

@@ -250,7 +250,7 @@ class Writer:
             bb = bytearray(1024)
             bb[0:4] = b'DOS\0'
             struct.pack_into('>I', bb, 8, ROOT)
-            code = bytes.fromhex('43fa001e4eaeffa04a80670a20402068001670004e7570ff4e75') + b'dos.library\0'
+            code = bytes.fromhex('43fa00184eaeffa04a80670a20402068001670004e7570ff4e75') + b'dos.library\0'
             bb[12:12 + len(code)] = code
         struct.pack_into('>I', bb, 4, 0)
         struct.pack_into('>I', bb, 4, boot_checksum(bb))
