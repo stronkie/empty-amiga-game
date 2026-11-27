@@ -23,8 +23,8 @@ Boots the ADF like a real A500 (with the free AROS Kickstart replacement) in hea
 Chrome and takes screenshots - this is how the packed releases were checked.
 ```sh
 cd $AMIGA_TK/emu
-cp /path/Game_V1.0.adf vamigaweb/games/
-python3 serve.py vamigaweb &        # http://127.0.0.1:8000
+cp /path/Game_V1.0.adf vamigaweb/emu/games/
+python3 serve.py vamigaweb/emu &    # http://127.0.0.1:8000 (the emulator page is in emu/)
 python3 test2.py Game_V1.0.adf shots/game 30,60,90 "35:Space;65:Digit1,Space"
 #   adf (relative to games/), output prefix, screenshot times (s), "time:key,key;..."
 ```
@@ -37,3 +37,4 @@ new builds side by side (same timings) when you change loading or packing.
 After a build, give Mark the ADF (Downloads + Dropbox) and ask him to test on his
 Amiga 500 / ACA500 / WinUAE. His CF card has an AGS2 "Game Selector" with all games
 (WHDLoad versions).
+
