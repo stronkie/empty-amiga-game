@@ -22,8 +22,10 @@ gives `build/SSIntro` (plain, for hard drive zips) and `build/StronkieSoftIntro_
 (test disk; on the disk SSIntro is packed with tools/pack).
 
 ## Adding it to a game (floppy)
-Put the packed SSIntro on the game ADF (tools/adfput.py) and add `SSIntro` as the first
-line of the disk's s/startup-sequence. The game itself does not change. Not for WHDLoad
+`python3 tools/add_intro.py Game.adf Game_new.adf` (after intro/build.sh): copies the disk,
+adds the packed SSIntro and makes `SSIntro` the first line of s/startup-sequence
+(boot block and volume name kept). First test round 27-11-2026: Darts, Superpipes,
+Clover Snake, StoneAge, World of Stronkie remake (`..._IntroTest.adf`). The game itself does not change. Not for WHDLoad
 (the intro uses graphics.library); hard drive zips need a small script started from the icon.
 
 ## Files
