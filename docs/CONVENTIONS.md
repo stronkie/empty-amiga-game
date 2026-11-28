@@ -13,6 +13,7 @@
 - Show the version number on the title or credits screen.
 
 ## Every game has
+- The **Stronkie Soft boot intro** (`intro/`, SSIntro) before the game on the floppy versions: first line of the disk's startup-sequence (added from 27-11-2026, floppies first).
 - A **free demo** (limited: a few levels / one event / one mode), with DEMO on the title and in the game, and a page at the end saying what the full game has. The demo stays frozen when the full game is updated.
 - A **developer mode** with cheats and shortcuts, opened with a key combination (for example CTRL + ALT + D on the title) - **never F10**, because F10 quits WHDLoad. Show "DEV" on screen while it is on, and do not save records while it is on. Add the keys to `Stronkie Soft - Games, Developer Modes & Cheats.xlsx` in Dropbox\Amiga.
 - A **hard disk installer** on the game disk (see `templates/installer/`) and a hard drive / CF card zip (a drawer with the game, its icon and the ReadMe).

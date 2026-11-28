@@ -39,6 +39,7 @@ Then read, in this order:
 | `templates/whdload/` | three working WHDLoad slaves (no Kickstart image needed) |
 | `templates/installer/` | two hard disk installers that go on the game disk |
 | `printkit/` | manual (A5 booklet), 3D fold-up box (A3) and disk labels (A4) PDF makers |
+| `intro/` | the Stronkie Soft boot intro (SSIntro): animated logo + music, runs before every game - see intro/README.md |
 | `art/stronkiesoft_logo.png` | the Stronkie Soft logo (loading screen + title) |
 | `emu/` | vAmigaWeb (GPL) with the free AROS ROMs + `test2.py` / `boot_shots.py`: boot an ADF headless in Chrome and take screenshots |
 
